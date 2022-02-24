@@ -2,6 +2,10 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser');
+const res = require("express/lib/response");
+
+app.use(cookieParser());
 
 function generateRandomString() {
   let randomString = Math.random();
@@ -27,21 +31,9 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
-
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
-
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  console.log("req: ", req);
+  const templateVars = { urls: urlDatabase, username: req.cookies["username"]};
   res.render("urls_index", templateVars);
 });
 
@@ -52,7 +44,7 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.post("/urls/:shortURL", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
+  //console.log(req.body);  // Log the POST request body to the console
   //res.send("testing");         // Respond with 'Ok' (we will replace this)
   urlDatabase[req.params.shortURL] = req.body.longURL;
   res.redirect("/urls");
@@ -62,6 +54,17 @@ app.post("/urls/:shortURL", (req, res) => {
 // vv this POST route will remove a URL
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
+  res.redirect("/urls");
+});
+
+// i need a route to handle my /login 
+app.post("/login", (req,res) => {
+  res.cookie("username", req.body["username"]); // object username
+  res.redirect("/urls");
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie("username");
   res.redirect("/urls");
 });
 
