@@ -6,6 +6,20 @@
   <header>
   <%- include('partials/_header') %>
   </header>
+  <!--  -->
+  <template>
+    <form class="form-inline" action="/register" method="POST">
+
+        <!-- <label for="Email">Enter your Email Address </label> -->
+        <input class="form-control" type="email" name="email" placeholder="enter email here" style="width: 300px; margin: 1em">
+        <button type="submit" class="btn btn-primary">Submit</button>
+
+        <input class="form-control" type="password" name="password" placeholder="enter password here" style="width: 300px; margin: 1em">
+        <button type="submit" class="btn btn-primary">Submit</button>
+    
+    </form>
+  </template>
+  <!--  -->
   <main style="margin: 1em;">
     <h3>My URLs</h3>
     <table class="table">
