@@ -1,28 +1,34 @@
+// http://localhost:8080/urls  <-- browser url input
+
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
 const res = require("express/lib/response");
+const helpers = require("./helpers");
 
 app.use(cookieParser());
 
-function generateRandomString() {
-  let randomString = Math.random();
-  randomString = randomString.toString(36);
-  return randomString.slice(2, 8);
-}
+// function generateRandomString() {
+//   let randomString = Math.random();
+//   randomString = randomString.toString(36);
+//   return randomString.slice(2, 8);
+// }
 
-function getUserWithEmail(email, usersDatabase) {
-  for (let user in usersDatabase) {
-    if (usersDatabase[user].email === email) {
-      return usersDatabase[user];
-    }
-  }
-  return null;
-}
+// function getUserWithEmail(email, usersDatabase) {
+//   for (let user in usersDatabase) {
+//     if (usersDatabase[user].email === email) {
+//       return usersDatabase[user];
+//     }
+//   }
+//   return null;
+// }
 
 //let loggedIn = true; // a variable to check whether or not a user has already logged in. With this variable, we can allow only users who have logged in to edit and add new links
+
+let hashedPassword = 0;
 
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -69,6 +75,7 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
+    console.log("This is the urls new route");
     const userId = req.cookies.user_id;
     const user = users[userId];
     const templateVars = {user: user};
@@ -85,14 +92,31 @@ app.get("/urls", (req, res) => {
   //console.log("user: ", user);
   //console.log("userId: ", users[userId].id);
   const templateVars = { urls: urlDatabase, user: user, users: users};
+  
 
   res.render("urls_index", templateVars);
   
 });
 
+app.post("/urls", (req, res) => {
+  console.log("this is the urls route");
+  const newLongURL = req.body.longURL;
+  let newId = helpers.generateRandomString();
+//   i3BoGr: {
+//     longURL: "https://www.google.ca",
+//     userID: "aJ48lW"
+// }
+  urlDatabase[newId] = {
+    longURL: newLongURL, 
+    userID: req.cookies.user_id
+  };
+  // urlDatabase[req.params.shortURL].longURL = newLongURL;
+  console.log('new:', newLongURL);
+  res.redirect("/urls");
+})
+
 
 app.get("/urls/:shortURL", (req, res) => {
-
   const userId = req.cookies.user_id;
   const user = users[userId];
   
@@ -112,7 +136,7 @@ app.get("/register", (req, res) => {
   const userId = req.cookies.user_id;
   const user = users[userId];
   const templateVars = { user: user };
-
+  
   res.render("register", templateVars);
 
 })
@@ -121,21 +145,23 @@ app.get("/login", (req, res) => {
   //console.log("req.body: ", req.body);
   const userId = req.cookies.user_id;
   const user = users[userId];
-  console.log("test:", userId);
   const templateVars = {user: user};
   res.render("login", templateVars);
   
 })
 
 
+
+
 app.post("/urls/:shortURL", (req, res) => {
+  
   //console.log(req.body);  // Log the POST request body to the console
   //res.send("testing");         // Respond with 'Ok' (we will replace this)
   //urlDatabase[req.params.shortURL].longURL = req.body.longURL;
   //console.log("user-input :")
-  const newLongURL = req.body.updateURL;
+  const newLongURL = req.body.longURL;
   urlDatabase[req.params.shortURL].longURL = newLongURL;
-  console.log("newURL: ", newLongURL);
+  
   res.redirect("/urls");
 });
 
@@ -157,20 +183,19 @@ app.post("/login", (req,res) => {
   const testPassword = req.body.password;
   // let userObject = req.body;
   // console.log("user object:", userObject);
-  const checkUser = getUserWithEmail(testEmail, users);
+  // const checkUser = getUserWithEmail(testEmail, users);
+  const checkUser = helpers.getUserWithEmail(testEmail, users);
   if (!checkUser) {
     res.status(403);
-    res.send('Email not found');
-    loggedIn = false;
-    return;
-  } else {
-    if (testPassword !== checkUser.password) {
-      res.status(403);
-      return res.send('email password combination does not exist');
-    }
-    loggedIn = false;
+    return res.send('Email not found');
+  }//// VVV if the testpassword is not the same as the hashedPassword then return an error
+  if (!bcrypt.compareSync(testPassword, hashedPassword)) {
+    res.status(403);
+    return res.send('email password combination does not exist');
   }
+
   
+
   res.cookie("user_id", checkUser.id);
   res.redirect("/urls");
 
@@ -199,18 +224,33 @@ app.post("/register", (req, res) => {
     }
   }
 
-  let newId = generateRandomString();
+  let newId = helpers.generateRandomString();
   let newObj = {
     id: newId,
     email: req.body.email,
     password: req.body.password
   }
+  hashedPassword = bcrypt.hashSync(req.body.password, 10);
+  // users[req.cookies.user_id] = {
+  //   id: req.cookies.user_id,
+  //   email: req.body.email,
+  //   password: req.body.password
+  // };
   
-  // console.log("email: ", req.body.email);
-  // console.log("password: ", req.body.password);
+  // testing using loads of console.logs to figure stuff out
+  console.log('cookie contents:', req.cookies);
+  console.log('cookie user id:', req.cookies.user_id);
+  //console.log('password: ', req.body.password);
+  //console.log('email: ', req.body.email);
+  //console.log('users object: ', users);
+
+  console.log("is the hashed password the same as the original", (bcrypt.compareSync(req.body.password, hashedPassword)));
+  
+  console.log('hashedPassword: ', hashedPassword);
+  
   users[newId] = newObj;
   res.cookie("user_id", newId);
-  // console.log(users);
+  
   res.redirect("/urls");
 
 })
@@ -222,3 +262,4 @@ app.listen(PORT, () => {
 });
 
 
+// for some reason my cookie id only works when i've already got a cookie registered in my browser, i have to start the server up with a cookie in my browser to be able to get it's id
