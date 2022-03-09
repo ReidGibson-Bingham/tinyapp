@@ -11,6 +11,16 @@ const helpers = require("./helpers");
 
 app.use(cookieParser());
 
+var cookieSession = require('cookie-session')
+
+app.use(cookieSession({
+  name: 'session',
+  keys: ['lskdjasldkjflkasjd', 'asldkjfkoijwe0934j'],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
+
 // function generateRandomString() {
 //   let randomString = Math.random();
 //   randomString = randomString.toString(36);
@@ -76,7 +86,8 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
     console.log("This is the urls new route");
-    const userId = req.cookies.user_id;
+    // const userId = req.cookies.user_id;
+    const userId = req.session.user_id;
     const user = users[userId];
     const templateVars = {user: user};
     res.render("urls_new", templateVars, ); 
@@ -86,7 +97,8 @@ app.get("/urls/new", (req, res) => {
 //the /urls page should not display URLs unless the user is logged in
 app.get("/urls", (req, res) => {
 
-  const userId = req.cookies.user_id;
+  // const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   //console.log("req.params: ", req.params);
   const user = users[userId];
   //console.log("user: ", user);
@@ -108,7 +120,8 @@ app.post("/urls", (req, res) => {
 // }
   urlDatabase[newId] = {
     longURL: newLongURL, 
-    userID: req.cookies.user_id
+    // userID: req.cookies.user_id
+    userID: req.session.user_id
   };
   // urlDatabase[req.params.shortURL].longURL = newLongURL;
   console.log('new:', newLongURL);
@@ -117,7 +130,8 @@ app.post("/urls", (req, res) => {
 
 
 app.get("/urls/:shortURL", (req, res) => {
-  const userId = req.cookies.user_id;
+  // const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   const user = users[userId];
   
   // vv this is where i start to get confused about req.params etc
@@ -133,7 +147,8 @@ app.get("/register", (req, res) => {
   //   password: req.body.password
   // }
   // users[newId] = newObj;
-  const userId = req.cookies.user_id;
+  // const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   const user = users[userId];
   const templateVars = { user: user };
   
@@ -143,7 +158,8 @@ app.get("/register", (req, res) => {
 
 app.get("/login", (req, res) => {
   //console.log("req.body: ", req.body);
-  const userId = req.cookies.user_id;
+  // const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   const user = users[userId];
   const templateVars = {user: user};
   res.render("login", templateVars);
@@ -238,8 +254,10 @@ app.post("/register", (req, res) => {
   // };
   
   // testing using loads of console.logs to figure stuff out
-  console.log('cookie contents:', req.cookies);
-  console.log('cookie user id:', req.cookies.user_id);
+  // console.log('cookie contents:', req.cookies);
+  console.log('cookie contents:', req.session);
+  // console.log('cookie user id:', req.cookies.user_id);
+  console.log('cookie user id:', req.session.user_id);
   //console.log('password: ', req.body.password);
   //console.log('email: ', req.body.email);
   //console.log('users object: ', users);
