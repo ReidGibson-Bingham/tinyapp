@@ -22,8 +22,6 @@ app.use(cookieSession({
 }))
 
 
-//let loggedIn = true; // this was supposed to be a variable to check whether or not a user has already logged in. 
-
 let hashedPassword = 0;
 
 app.use(bodyParser.urlencoded({extended: true}));
